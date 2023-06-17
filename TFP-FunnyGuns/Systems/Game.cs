@@ -31,6 +31,7 @@ namespace TFP_FunnyGuns.Systems
             CountdownSW.Start();
 
             Timing.RunCoroutine(countdownCoroutine(), "tfp_fg_cd");
+            Timing.RunCoroutine(endgameCheckerCoroutine(), "tfp_fg_ec");
         }
 
         public static void StopEvent()
@@ -54,10 +55,20 @@ namespace TFP_FunnyGuns.Systems
                     CountdownSW.Stop();
                     CountdownSW.Reset();
 
-                    //TODO: Call a random mutator here
+
 
                     if (advanceStage())
+                    {
+                        Exiled.API.Features.Cassie.Message(".g4", false, false, false);
                         CountdownSW.Start();
+                    }
+                    else
+                    {
+                        Exiled.API.Features.Cassie.Message(".g4 .g4", false, false, false);
+                    }
+
+                    Exiled.API.Features.Cassie.Clear();
+                    
                 }
                 yield return Timing.WaitForSeconds(0.5f);
             }
@@ -65,27 +76,58 @@ namespace TFP_FunnyGuns.Systems
 
         private static bool advanceStage()
         {
-            switch (Stage)
+            switch (TimedEvents.LockdownStatus)
             {
-                case 1:
+                case TimedEvents.ZoneLockdownStatus.None:
                     TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.Surface);
+                    MutatorSystem.EngageRandomMutator();
                     CountdownLimitSeconds = 150d;
                     break;
-                case 2:
+                case TimedEvents.ZoneLockdownStatus.Surface:
                     TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.LCZ);
+                    MutatorSystem.EngageRandomMutator();
                     CountdownLimitSeconds = 120d;
                     break;
-                case 3:
+                case TimedEvents.ZoneLockdownStatus.LCZ:
                     TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.HCZ);
+                    MutatorSystem.EngageRandomMutator();
                     CountdownLimitSeconds = 90d;
                     break;
-                case 4:
+                case TimedEvents.ZoneLockdownStatus.HCZ:
                     TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.InstantDeath);
+                    MutatorSystem.DisengageAllMutators(true);
                     CountdownLimitSeconds = -1d; //basically disabling anything
+                    Stage++;
                     return false;
             }
             Stage++;
             return true;
+        }
+
+        private static IEnumerator<float> endgameCheckerCoroutine()
+        {
+            while (true)
+            {
+                yield return Timing.WaitForSeconds(1f);
+
+                if (Exiled.API.Features.Player.List.Count() == 1)
+                {
+                    continue;
+                }
+
+                int CICount, NTFCount;
+                NTFCount = Exiled.API.Features.Player.List.Count(pl => pl.Role.Team == PlayerRoles.Team.FoundationForces);
+                CICount = Exiled.API.Features.Player.List.Count(pl => pl.Role.Team == PlayerRoles.Team.ChaosInsurgency);
+
+                if (CICount == 0 || NTFCount == 0)
+                {
+                    if (CICount == 0)
+                        Exiled.API.Features.Map.Broadcast(10, $"Победа <color=blue>MTF</color>.");
+                    else if (NTFCount == 0)
+                        Exiled.API.Features.Map.Broadcast(10, $"Победа <color=green>Хаоса</color>.");
+                    Plugin.instance.DisEngage();
+                }
+            }
         }
     }
 }

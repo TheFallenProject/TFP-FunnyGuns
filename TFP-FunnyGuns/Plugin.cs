@@ -22,7 +22,7 @@ namespace TFP_FunnyGuns
         public bool LowPlayerEvent { get; set; } = false;
         public int EventWeighting { get; set; } = 10;
         public string ShortRulesDescription { get; set; } = "Уничтожьте <color=red>вражескую команду</color>, пока не уничтожили <color=green>вас</color>! <color=#fcf98b>Зоны закрываются, мутаторы выбираются</color>!";
-        public string ExpandedRules { get; set; } = "Вы - моговец или хаосит.\nВаша задача - <color=yellow>уничтожить вражескую команду</color>.\nВы можете, <color=yellow>и должны</color>, <color=yellowспускаться в комплекс</color>, если не хотите умереть сразу на поверхности.\n\n" +
+        public string ExpandedRules { get; set; } = "Вы - моговец или хаосит.\nВаша задача - <color=yellow>уничтожить вражескую команду</color>. Вы можете, <color=yellow>и должны</color>, <color=yellowспускаться в комплекс</color>, если не хотите умереть сразу на поверхности.\n\n" +
             "Во время игры будут продвигаться стадии с 1 до 5, где 5 - внезапная смерть. С каждым увеличением стадии будет запускаться новый мутатор." +
             " Они могут поменять как работают некоторые механики. Они работают со 2 по 4 стадию включительно, но выключаются на 5.\n\nА, и да, пока не забыл. " +
             "<color=red>Не тимьтесь во время ивента</color>, иначе админ может и должен постучать вам по голове.";
@@ -32,6 +32,8 @@ namespace TFP_FunnyGuns
 
         // used to balance CI spawn in case of unfair NTF spawn
         private static bool CISpawnedUnfairly;
+
+        public static Plugin instance;
 
         public void DisEngage()
         {
@@ -44,16 +46,21 @@ namespace TFP_FunnyGuns
                 }
             }
             Exiled.API.Features.Log.Info("disengaged");
+            MutatorSystem.DisengageAllMutators();
             TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.None);
             Timing.KillCoroutines("tfp_fg_hud");
             Timing.KillCoroutines("tfp_fg_ld");
+            Timing.KillCoroutines("tfp_fg_ec");
             Game.CountdownSW.Stop();
             Game.CountdownSW.Reset();
+            instance = null;
+            Exiled.Events.Handlers.Player.Dying -= Player_Dying;
             Ended.Invoke();
         }
 
         public void Engage()
         {
+            Exiled.Events.Handlers.Player.Dying += Player_Dying;
             TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.None);
             foreach (var door in Exiled.API.Features.Door.List)
             {
@@ -66,6 +73,11 @@ namespace TFP_FunnyGuns
             Game.StartEvent();
             Timing.RunCoroutine(TimedEvents.LockdownCoroutine(), "tfp_fg_ld");
             Timing.RunCoroutine(HUD.UpdateCoroutine(), "tfp_fg_hud");
+        }
+
+        private void Player_Dying(Exiled.Events.EventArgs.Player.DyingEventArgs ev)
+        {
+            ev.Player.RemoveItem(itm => !itm.IsConsumable);
         }
 
         public bool LaunchCheck(out string reason)
@@ -86,6 +98,8 @@ namespace TFP_FunnyGuns
 
         public void PreLaunch()
         {
+            instance = this;
+            MutatorSystem.RegisterMutators();
             int NTF, CI;
             
             if (Exiled.API.Features.Player.List.Count() % 2 == 0)

@@ -67,25 +67,42 @@ namespace TFP_FunnyGuns.Systems
             if (Game.Stage < 5)
             {
                 additionalInfo = $"\n<color={getColorFlickering()}>%message</color>";
-                switch (Game.Stage)
+                switch (TimedEvents.LockdownStatus)
                 {
-                    case 1:
+                    case TimedEvents.ZoneLockdownStatus.None:
                         additionalInfo = additionalInfo.Replace("%message", "Закрытие поверхности в начале следующий стадии.");
                         break;
-                    case 2:
+                    case TimedEvents.ZoneLockdownStatus.Surface:
                         additionalInfo = additionalInfo.Replace("%message", "Закрытие лайтов в начале следующий стадии.");
                         break;
-                    case 3:
+                    case TimedEvents.ZoneLockdownStatus.LCZ:
                         additionalInfo = additionalInfo.Replace("%message", "Закрытие хардов в начале следующий стадии.");
                         break;
-                    case 4:
+                    case TimedEvents.ZoneLockdownStatus.HCZ:
                         additionalInfo = additionalInfo.Replace("%message", "Отключение лечения и постоянный урон в начале следующей стадии.");
+                        break;
+                    case TimedEvents.ZoneLockdownStatus.InstantDeath:
+                        additionalInfo = additionalInfo.Replace("%message", "Время на исходе...");
                         break;
                 }
             }
-            if (false)
+            if (MutatorSystem.activeMutatorsReplica.Count > 0)
             {
-                //mutator logic
+                var mutators = MutatorSystem.activeMutatorsReplica;
+                additionalInfo += "\n\n";
+                if (MutatorSystem.mutatorDescriptionHUD != "")
+                {
+                    additionalInfo += $"<b>Новый мутатор: {MutatorSystem.mutatorDescriptionHUD}</b>\n";
+                }
+
+                additionalInfo += $"Активны{(mutators.Count == 1 ? "й" : "е")} мутатор{(mutators.Count == 1 ? "" : "ы")}: ";
+
+                int c = 1;
+                foreach (var mut in mutators)
+                {
+                    additionalInfo += $"{mut.displayName}{(c == mutators.Count ? "." : ", ")}";
+                    c++;
+                }
             }
             return additionalInfo;
         }
@@ -97,7 +114,7 @@ namespace TFP_FunnyGuns.Systems
                 int timeRemaining = (int)(Game.CountdownLimitSeconds - Game.CountdownSW.Elapsed.TotalSeconds);
                 foreach (var pl in Exiled.API.Features.Player.List)
                 {
-                    pl.ShowHint($"Стадия <color={getStageColor()}>{Game.Stage}</color>\n{(timeRemaining != -1 ? $"До следующей стадии: {timeRemaining}" : "<color=red><b>Внезапная смерть</b></color>")} {getSecondsWord(timeRemaining)}{getAdditionalInformation()}", 2);
+                    pl.ShowHint($"\n\n\n\n\nСтадия <color={getStageColor()}>{Game.Stage}</color>\n{(timeRemaining != -1 ? $"До следующей стадии: {timeRemaining} {getSecondsWord(timeRemaining)}" : "<color=red><b>Внезапная смерть</b></color>")}{getAdditionalInformation()}", 2);
                 }
                 yield return Timing.WaitForSeconds(0.5f);
             }
