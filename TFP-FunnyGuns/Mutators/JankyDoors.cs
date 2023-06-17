@@ -9,7 +9,7 @@ namespace TFP_FunnyGuns.Mutators
     {
         public string displayName { get; set; } = "<color=orange>Беды с дверьми</color>";
         public string shortExplanation { get; set; } = "Двери открываются и закрываются сами по себе";
-        public int mutatorWeight { get; set; } = 42042;
+        public int mutatorWeight { get; set; } = 8;
         public bool instantDeathTermination { get; set; } = false;
 
         public void DisEngage()
