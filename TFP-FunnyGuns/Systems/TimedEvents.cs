@@ -45,7 +45,10 @@ namespace TFP_FunnyGuns.Systems
 
             if ((int)_lds < (int)LockdownStatus && _lds != ZoneLockdownStatus.None)
             {
-                throw new Exception("You cannot decrease lockdown severity, only reset it to None"); //because it will be messy real soon real fast
+                TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.None);
+                TimedEvents.UpdateZoneLockdown(_lds);
+                return;
+                //throw new Exception("You cannot decrease lockdown severity, only reset it to None"); //because it will be messy real soon real fast
             }
             if ((int)_lds != (int)LockdownStatus + 1 && _lds != ZoneLockdownStatus.None)
             {

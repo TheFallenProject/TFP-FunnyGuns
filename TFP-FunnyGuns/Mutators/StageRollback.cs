@@ -21,10 +21,7 @@ namespace TFP_FunnyGuns.Mutators
 
         public void Engage()
         {
-            TimedEvents.ZoneLockdownStatus newLD = (TimedEvents.ZoneLockdownStatus)((int)TimedEvents.LockdownStatus - 1);
-
-            TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.None);
-            TimedEvents.UpdateZoneLockdown(newLD);
+            TimedEvents.UpdateZoneLockdown((TimedEvents.ZoneLockdownStatus)((int)TimedEvents.LockdownStatus - 1));
         }
 
         public bool StartCheck()
