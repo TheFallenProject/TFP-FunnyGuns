@@ -79,22 +79,24 @@ namespace TFP_FunnyGuns.Systems
             switch (TimedEvents.LockdownStatus)
             {
                 case TimedEvents.ZoneLockdownStatus.None:
-                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.Surface);
+                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.Surface); //2
                     MutatorSystem.EngageRandomMutator();
-                    CountdownLimitSeconds = 150d;
+                    CountdownLimitSeconds = 75d;
                     break;
                 case TimedEvents.ZoneLockdownStatus.Surface:
-                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.LCZ);
+                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.LCZ); //3
+                    InterconiumCore.Equalise();
                     MutatorSystem.EngageRandomMutator();
-                    CountdownLimitSeconds = 120d;
+                    CountdownLimitSeconds = 100d;
                     break;
                 case TimedEvents.ZoneLockdownStatus.LCZ:
-                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.HCZ);
+                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.HCZ); //4
+                    InterconiumCore.Finish(false);
                     MutatorSystem.EngageRandomMutator();
                     CountdownLimitSeconds = 90d;
                     break;
                 case TimedEvents.ZoneLockdownStatus.HCZ:
-                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.InstantDeath);
+                    TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.InstantDeath); //5
                     MutatorSystem.DisengageAllMutators(true);
                     CountdownLimitSeconds = -1d; //basically disabling anything
                     Stage++;

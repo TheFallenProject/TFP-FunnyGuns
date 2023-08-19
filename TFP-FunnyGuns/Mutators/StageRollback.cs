@@ -11,7 +11,7 @@ namespace TFP_FunnyGuns.Mutators
     {
         public string displayName { get; set; } = "<color=#ff00ea>Задержка стадии</color>";
         public string shortExplanation { get; set; } = "Зона не закрылась, радуйтесь";
-        public int mutatorWeight { get; set; } = 7;
+        public int mutatorWeight { get; set; } = 3;
         public bool instantDeathTermination { get; set; } = true;
 
         public void DisEngage()

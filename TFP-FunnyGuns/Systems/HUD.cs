@@ -1,4 +1,5 @@
 ﻿using MEC;
+using PlayerRoles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +62,7 @@ namespace TFP_FunnyGuns.Systems
                 return "white";
         }
 
-        private static string getAdditionalInformation()
+        private static string getAdditionalInformation(PlayerRoles.Team team)
         {
             string additionalInfo = "";
             if (Game.Stage < 5)
@@ -104,6 +105,32 @@ namespace TFP_FunnyGuns.Systems
                     c++;
                 }
             }
+            if (InterconiumCore.HudStatus != InterconiumCore.EquilaserHudStatus.None)
+            {
+                additionalInfo += "\n\n<color=#b7f553>";
+                switch (InterconiumCore.HudStatus)
+                {
+                    case InterconiumCore.EquilaserHudStatus.Charging:
+                        additionalInfo += "Запрос подкрепления подготавливается. Готовьтесь защищать или захватывать интерком"; 
+                        break;
+                    case InterconiumCore.EquilaserHudStatus.ActiveMTF:
+                        additionalInfo += $"{(team == Team.FoundationForces ? $"Скажите что-нибудь в интерком для сравнения количиства живых игроков. (+{InterconiumCore.RespawnCount})" : $"Защитите интерком от MTF, чтобы они не сравняли счёт живых игроков с вами (+{InterconiumCore.RespawnCount}).")}";
+                        break;
+                    case InterconiumCore.EquilaserHudStatus.ActiveCI:
+                        additionalInfo += $"{(team == Team.ChaosInsurgency ? $"Скажите что-нибудь в интерком для сравнения количиства живых игроков. (+{InterconiumCore.RespawnCount})" : $"Защитите интерком от хаоса, чтобы они не сравняли счёт живых игроков с вами (+{InterconiumCore.RespawnCount}).")}";
+                        break;
+                    case InterconiumCore.EquilaserHudStatus.Secured:
+                        additionalInfo += "Интерком был захвачен. Подкрепление на месте.";
+                        break;
+                    case InterconiumCore.EquilaserHudStatus.Lost:
+                        additionalInfo += "Интерком был защищён. Подкрепление не прибыло.";
+                        break;
+                    case InterconiumCore.EquilaserHudStatus.Recalled:
+                        additionalInfo += "Счёт игроков равен, нет нужды в подкреплении.";
+                        break;
+                }
+                additionalInfo += "</color>";
+            }
             return additionalInfo;
         }
 
@@ -114,7 +141,7 @@ namespace TFP_FunnyGuns.Systems
                 int timeRemaining = (int)(Game.CountdownLimitSeconds - Game.CountdownSW.Elapsed.TotalSeconds);
                 foreach (var pl in Exiled.API.Features.Player.List)
                 {
-                    pl.ShowHint($"\n\n\n\n\nСтадия <color={getStageColor()}>{Game.Stage}</color>\n{(timeRemaining != -1 ? $"До следующей стадии: {timeRemaining} {getSecondsWord(timeRemaining)}" : "<color=red><b>Внезапная смерть</b></color>")}{getAdditionalInformation()}", 2);
+                    pl.ShowHint($"\n\n\n\n\n\n\n\n\nСтадия <color={getStageColor()}>{Game.Stage}</color>\n{(timeRemaining != -1 ? $"До следующей стадии: {timeRemaining} {getSecondsWord(timeRemaining)}" : "<color=red><b>Внезапная смерть</b></color>")}{getAdditionalInformation(pl.Role.Team)}", 2);
                 }
                 yield return Timing.WaitForSeconds(0.5f);
             }

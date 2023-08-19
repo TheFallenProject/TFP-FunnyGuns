@@ -42,7 +42,7 @@ namespace TFP_FunnyGuns
                 if (door.Zone == ZoneType.HeavyContainment)
                 {
                     if (((int)door.IgnoredDamageTypes & (int)Interactables.Interobjects.DoorUtils.DoorDamageType.Grenade) != 0)
-                        door.IgnoredDamageTypes = door.IgnoredDamageTypes ^ Interactables.Interobjects.DoorUtils.DoorDamageType.Grenade;
+                        door.IgnoredDamageTypes ^= Interactables.Interobjects.DoorUtils.DoorDamageType.Grenade;
                 }
             }
             Exiled.API.Features.Log.Info("disengaged");
@@ -53,26 +53,38 @@ namespace TFP_FunnyGuns
             Timing.KillCoroutines("tfp_fg_ec");
             Game.CountdownSW.Stop();
             Game.CountdownSW.Reset();
+            InterconiumCore.Finish(false);
             instance = null;
             Exiled.Events.Handlers.Player.Dying -= Player_Dying;
-            Ended.Invoke();
+            Exiled.Events.Handlers.Server.RespawningTeam -= Server_RespawningTeam;
+            try
+            {
+                Ended.Invoke();
+            }
+            catch (Exception ex) { Exiled.API.Features.Log.Warn($"Failed to invoke Ended event. This is bad, go check this pretty nifty error: {ex.Message}"); }
         }
 
         public void Engage()
         {
             Exiled.Events.Handlers.Player.Dying += Player_Dying;
+            Exiled.Events.Handlers.Server.RespawningTeam += Server_RespawningTeam;
             TimedEvents.UpdateZoneLockdown(TimedEvents.ZoneLockdownStatus.None);
             foreach (var door in Exiled.API.Features.Door.List)
             {
                 if (door.Zone == ZoneType.HeavyContainment)
                 {
-                    door.IgnoredDamageTypes = door.IgnoredDamageTypes | Interactables.Interobjects.DoorUtils.DoorDamageType.Grenade; // OH MY GOD BITWISE LOGIC NO WAAAY
+                    door.IgnoredDamageTypes |= Interactables.Interobjects.DoorUtils.DoorDamageType.Grenade; // OH MY GOD BITWISE LOGIC NO WAAAY
                 }
             }
             DecontaminationController.Singleton.NetworkDecontaminationOverride = DecontaminationController.DecontaminationStatus.Disabled; //trying to disable it
             Game.StartEvent();
             Timing.RunCoroutine(TimedEvents.LockdownCoroutine(), "tfp_fg_ld");
             Timing.RunCoroutine(HUD.UpdateCoroutine(), "tfp_fg_hud");
+        }
+
+        private void Server_RespawningTeam(Exiled.Events.EventArgs.Server.RespawningTeamEventArgs ev)
+        {
+            ev.IsAllowed = false; //no normal respawns
         }
 
         private void Player_Dying(Exiled.Events.EventArgs.Player.DyingEventArgs ev)
